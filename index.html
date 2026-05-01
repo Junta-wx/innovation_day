@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PartnerUp | Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --orange: #ff6720;
+            --orange-light: #fff0e8;
+            --bg: #f1f5f9;
+            --text: #0f172a;
+            --sidebar: #ffffff;
+            --border: #e2e8f0;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter', sans-serif; background:var(--bg); color:var(--text); overflow:hidden; }
+        .app { display:flex; height:100vh; }
+        .sidebar { width:260px; background:white; border-right:1px solid var(--border); display:flex; flex-direction:column; padding:2rem 1rem; z-index:100; }
+        .logo { display:flex; align-items:center; gap:0.75rem; font-size:1.5rem; font-weight:800; color:var(--orange); margin-bottom:3rem; }
+        .nav { flex:1; }
+        .nav-btn { width:100%; padding:0.8rem 1rem; display:flex; align-items:center; gap:1rem; border:none; background:none; border-radius:12px; color:#64748b; font-weight:600; cursor:pointer; margin-bottom:0.5rem; transition:0.2s; }
+        .nav-btn:hover { background:#f8fafc; }
+        .nav-btn.active { background:var(--orange-light); color:var(--orange); }
+        .main { flex:1; padding:2.5rem; overflow-y:auto; position:relative; padding-bottom:100px; }
+        .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; }
+        .tab-content { display: none !important; }
+        .tab-content.active { display: block !important; }
+        .card { background:white; padding:1.5rem; border-radius:20px; border:1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom:1.5rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-bottom:1.5rem; }
+        .stat { display:flex; flex-direction:column; gap:0.5rem; }
+        .stat-label { font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; }
+        .stat-val { font-size:2rem; font-weight:800; }
+        .charts { display: grid; grid-template-columns: 2fr 1fr; gap:1.5rem; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: white; border-radius: 20px; border: 1px solid var(--border); overflow: hidden; }
+        .cal-day-h { padding: 1rem; text-align: center; font-weight: 800; font-size: 0.7rem; color: #64748b; border-bottom: 1px solid var(--border); background: #f8fafc; }
+        .cal-cell { min-height: 120px; padding: 0.5rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .cal-num { font-weight: 800; font-size: 0.8rem; }
+        .cal-event { font-size: 0.6rem; padding: 0.25rem 0.4rem; background: var(--orange); color: white; border-radius: 4px; margin-top: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+        .cal-event.must-do { background: #ef4444; }
+        .cal-event.should-do { background: #8b5cf6; }
+        .prompt-cont { position: fixed; bottom: 2rem; left: 280px; right: 2rem; display: flex; justify-content: center; pointer-events: none; }
+        .prompt { width: 100%; max-width: 700px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 0.75rem 1.25rem; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid white; display: flex; align-items: center; gap: 1rem; pointer-events: auto; }
+        .prompt input { flex: 1; border: none; outline: none; background: transparent; font-size: 0.95rem; }
+        .prompt-btn { background: var(--orange); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .list-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 0.75rem; }
+        .filter-select { background: white; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo"><i data-lucide="handshake"></i><span>PartnerUp</span></div>
+            <nav class="nav">
+                <button class="nav-btn active" data-t="performance"><i data-lucide="bar-chart-2"></i>Performance</button>
+                <button class="nav-btn" data-t="admin"><i data-lucide="user-cog"></i>Partner Admin</button>
+                <button class="nav-btn" data-t="legal"><i data-lucide="scale"></i>Legal Hub</button>
+                <button class="nav-btn" data-t="marketing"><i data-lucide="calendar-days"></i>Campaigns</button>
+            </nav>
+            <div style="margin-top:auto; padding:1rem; border-top:1px solid var(--border); display:flex; align-items:center; gap:1rem">
+                <div style="width:36px; height:36px; background:var(--orange); color:white; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800">MM</div>
+                <div style="font-size:0.8rem; font-weight:700">Manager</div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <h1 id="title">Performance</h1>
+                <div style="display:flex; gap:1rem">
+                    <select id="filter" class="filter-select">
+                        <option value="all">All Partners</option>
+                        <option value="Partner X">Partner X</option>
+                        <option value="Partner Y">Partner Y</option>
+                    </select>
+                    <button class="filter-select" style="cursor:pointer"><i data-lucide="bell" style="width:16px"></i></button>
+                </div>
+            </header>
+
+            <div id="performance" class="tab-content active">
+                <div class="grid">
+                    <div class="card stat"><span class="stat-label">Value</span><span id="v1" class="stat-val">$0</span></div>
+                    <div class="card stat"><span class="stat-label">Points</span><span id="v2" class="stat-val">0</span></div>
+                    <div class="card stat"><span class="stat-label">Cost</span><span id="v3" class="stat-val">$0</span></div>
+                    <div class="card stat"><span class="stat-label">ROI</span><span id="v4" class="stat-val">0.0</span></div>
+                </div>
+                <div class="charts">
+                    <div class="card"><h3>Revenue</h3><div style="height:250px"><canvas id="c1"></canvas></div></div>
+                    <div class="card"><h3>Category</h3><div style="height:250px"><canvas id="c2"></canvas></div></div>
+                </div>
+            </div>
+
+            <div id="admin" class="tab-content">
+                <div class="grid" style="grid-template-columns: 1fr 1fr">
+                    <div class="card"><h3>Meetings</h3><div id="l1" style="margin-top:1rem"></div></div>
+                    <div class="card"><h3>To-do</h3><div style="margin-top:1rem">
+                        <div class="list-item"><i data-lucide="check-circle" style="color:#10b981"></i><span>Check Q3 Data</span></div>
+                        <div class="list-item"><i data-lucide="circle"></i><span>Draft renewal</span></div>
+                    </div></div>
+                </div>
+            </div>
+
+            <div id="legal" class="tab-content">
+                <div class="card"><h3>Legal Documents</h3><div id="l2" style="margin-top:1rem"></div></div>
+            </div>
+
+            <div id="marketing" class="tab-content">
+                <div class="card" style="padding:0">
+                    <div style="padding:1.5rem"><h2>June 2026</h2></div>
+                    <div id="cal" class="calendar-grid">
+                        <div class="cal-day-h">SUN</div><div class="cal-day-h">MON</div><div class="cal-day-h">TUE</div><div class="cal-day-h">WED</div><div class="cal-day-h">THU</div><div class="cal-day-h">FRI</div><div class="cal-day-h">SAT</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="prompt-cont">
+                <div class="prompt">
+                    <i data-lucide="sparkles" style="color:var(--orange)"></i>
+                    <input id="prompt-in" type="text" placeholder="Ask PartnerUp...">
+                    <button class="prompt-btn"><i data-lucide="arrow-up"></i></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            let charts = {};
+
+            function switchTab(id) {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.t === id));
+                document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === id));
+                document.getElementById('title').textContent = id.charAt(0).toUpperCase() + id.slice(1);
+                document.getElementById('filter').style.display = (id === 'performance' ? 'block' : 'none');
+                if (id === 'performance' && charts.r) { charts.r.resize(); charts.c.resize(); }
+            }
+
+            document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.t)));
+
+            function initCharts() {
+                const rCtx = document.getElementById('c1').getContext('2d');
+                const cCtx = document.getElementById('c2').getContext('2d');
+                charts.r = new Chart(rCtx, { type:'line', data:{labels:[], datasets:[{label:'Rev', data:[], borderColor:'#ff6720', backgroundColor:'rgba(255,103,32,0.08)', fill:true, tension:0.4}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}}});
+                charts.c = new Chart(cCtx, { type:'doughnut', data:{labels:[], datasets:[{data:[], backgroundColor:['#ff6720','#0ea5e9','#8b5cf6','#10b981','#f43f5e'], borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false}});
+            }
+
+            function update(p='all') {
+                if(!window.performanceData) return;
+                const d = p==='all' ? performanceData : performanceData.filter(x => x.partner_name===p);
+                let r=0, pt=0, c=0; const cats={}, trends={};
+                d.forEach(x => {
+                    const rv = parseFloat(x.transaction_amount)||0;
+                    r+=rv; pt+=(parseInt(x.base_points_issued)||0)+(parseInt(x.bonus_points_issued)||0); c+=parseFloat(x.total_cost_to_partner)||0;
+                    cats[x.category] = (cats[x.category]||0)+rv;
+                    const m = new Date(x.transaction_date).toLocaleString('default',{month:'short'});
+                    trends[m] = (trends[m]||0)+rv;
+                });
+                document.getElementById('v1').textContent = `$${(r/1000).toFixed(1)}k`;
+                document.getElementById('v2').textContent = `${(pt/1000).toFixed(1)}k`;
+                document.getElementById('v3').textContent = `$${(c/1000).toFixed(1)}k`;
+                document.getElementById('v4').textContent = (r/(c||1)).toFixed(2);
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const sorted = Object.keys(trends).sort((a,b) => months.indexOf(a)-months.indexOf(b));
+                charts.r.data.labels = sorted; charts.r.data.datasets[0].data = sorted.map(m => trends[m]); charts.r.update();
+                charts.c.data.labels = Object.keys(cats); charts.c.data.datasets[0].data = Object.values(cats); charts.c.update();
+            }
+
+            function render() {
+                if(window.meetingsData) {
+                    const l = document.getElementById('l1');
+                    meetingsData.slice(0,5).forEach(m => {
+                        l.innerHTML += `<div class="list-item"><i data-lucide="video" style="color:#0ea5e9"></i><span>${m.Name.replace('.docx','')}</span></div>`;
+                    });
+                }
+                if(window.contractsData) {
+                    const l = document.getElementById('l2');
+                    contractsData.forEach(c => {
+                        l.innerHTML += `<div class="list-item"><i data-lucide="file-text"></i><span>${c.Name}</span></div>`;
+                    });
+                }
+                if(window.marketingData) {
+                    const g = document.getElementById('cal');
+                    const f = new Date(2026, 5, 1).getDay();
+                    for(let i=0; i<f; i++) g.innerHTML += '<div class="cal-cell"></div>';
+                    for(let d=1; d<=30; d++) {
+                        const ds = `2026-06-${d.toString().padStart(2,'0')}`;
+                        const cs = marketingData.filter(x => x.date.startsWith(ds));
+                        g.innerHTML += `<div class="cal-cell"><span class="cal-num">${d}</span>${cs.map(x => `<div class="cal-event ${x.priority.toLowerCase().replace(' ','-')}">${x.name}</div>`).join('')}</div>`;
+                    }
+                }
+                lucide.createIcons();
+            }
+
+            document.getElementById('filter').onchange = (e) => update(e.target.value);
+            document.getElementById('prompt-in').onkeypress = (e) => { if(e.key==='Enter') { alert('Processing...'); e.target.value=''; } };
+
+            initCharts(); update(); render(); switchTab('performance');
+        });
+    </script>
+</body>
+</html>
