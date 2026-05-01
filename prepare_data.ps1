@@ -34,8 +34,8 @@ $meetingsJson = $meetings | ConvertTo-Json -Compress
 $contractsJson = $contracts | ConvertTo-Json -Compress
 
 # Write to data.js
-$dataJs = "const performanceData = $performanceJson;`n"
-$dataJs += "const marketingData = $marketingJson;`n"
-$dataJs += "const meetingsData = $meetingsJson;`n"
-$dataJs += "const contractsData = $contractsJson;"
+$dataJs = "var performanceData = $performanceJson;`n"
+$dataJs += "var marketingData = $marketingJson;`n"
+$dataJs += "var meetingsData = $meetingsJson;`n"
+$dataJs += "var contractsData = $contractsJson;"
 Set-Content -Path "data.js" -Value $dataJs
